@@ -5,10 +5,13 @@ import utility from "./modifiers/utility";
 
 const addTitle = (title, modifiers) => "/* " + title + " */\n" + modifiers;
 
-const css = obj =>
+const css = ({ custom, theme, typography }) =>
   [
+    `html, body {
+      font-size: 16px;
+    }`,
     addTitle("reset", reset),
-    addTitle("grid", grid(obj.breakpoints, obj.sizes.tiny)),
+    addTitle("grid", grid(theme.breakpoints, theme.sizes.tiny)),
     addTitle(
       "whitespaces",
       generateModifiersFromSizes(
@@ -23,7 +26,7 @@ const css = obj =>
           ["margin-top", "margin--top"],
           ["margin-bottom", "margin--bottom"]
         ],
-        obj.sizes
+        theme.sizes
       )
     ),
     addTitle(
@@ -36,22 +39,33 @@ const css = obj =>
           ["border-bottom-left-radius", "border--bottom-left-radius"],
           ["border-bottom-right-radius", "border--bottom-right-radius"]
         ],
-        obj.borderRadius
+        theme.borderRadius
       )
     ),
-    addTitle("colors", generateModifiersFromProp("color", obj.colors)),
-    addTitle("layers", generateModifiersFromProp("z-index", obj.layers)),
+    addTitle("colors", generateModifiersFromProp("color", theme.colors)),
+    addTitle("layers", generateModifiersFromProp("z-index", theme.layers)),
     addTitle(
       "fonts",
-      generateModifiersFromProp("font-size", obj.sizes) +
+      generateModifiersFromProp("font-size", theme.sizes) +
         "\n" +
-        generateModifiersFromProp("font-weight", obj.fontWeights)
+        generateModifiersFromProp("font-weight", theme.fontWeights) +
+        "\n" +
+        Object.keys(typography)
+          .reduce(
+            (modifiers, key) => [
+              ...modifiers,
+              `${key}, .font--type-${key} { ${typography[key](theme)} }`
+            ],
+            []
+          )
+          .join("\n")
     ),
-    utility
+    utility,
+    custom(theme)
   ].join("\n\n");
 
 const ds = obj => ({
-  css: css(obj).replace(/\s+/g, ""),
+  css: css(obj), // .replace(/\s+/g, ""),
   theme: obj
 });
 
